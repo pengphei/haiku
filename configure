@@ -255,6 +255,7 @@ standard_gcc_settings()
 		m68k-*)		targetCpu=m68k;;
 		powerpc-*)	targetCpu=ppc;;
 		x86_64-*)	targetCpu=x86_64;;
+		mipsel-*)	targetCpu=mipsel;;
 		*)
 			echo "Unsupported gcc target machine: $gccMachine" >&2
 			exit 1
@@ -477,6 +478,7 @@ supportedTargetArchs="
 	arm
 	m68k
 	ppc
+	mipsel
 	x86
 	x86_64
 	x86_gcc2
@@ -559,6 +561,7 @@ while [ $# -gt 0 ] ; do
 				ppc)		targetMachine=powerpc-apple-haiku;;
 				m68k)		targetMachine=m68k-unknown-haiku;;
 				arm)		targetMachine=arm-unknown-haiku;;
+				mipsel)		targetMachine=mipsel-unknown-haiku;;
 				*)
 					echo "Unsupported target architecture: $2" >&2
 					exit 1
