@@ -24,6 +24,7 @@
 #include <boot/stage2.h>
 #include <syscall_utils.h>
 
+#include "loader.h"
 #include "package_support.h"
 #include "RootFileSystem.h"
 #include "file_systems/packagefs/packagefs.h"
@@ -681,6 +682,28 @@ get_boot_file_system(stage2_args* args, BootVolume& _bootVolume)
 
 		sBootDevice = device;
 		return B_OK;
+	}
+
+	// We did not manage to identify the boot partition, just use the first
+	// bootable one
+	void* cookie;
+	error = mount_file_systems(args);
+	if (gRoot->Open(&cookie, O_RDONLY) == B_OK) {
+		Directory* volume;
+		while (gRoot->GetNextNode(cookie, (Node**)&volume) == B_OK) {
+			// Only consider bootable volumes
+			if (!is_bootable(volume))
+				continue;
+			error = _bootVolume.SetTo(volume);
+			if (error != B_OK)
+				continue;
+
+			sBootDevice = gBootDevices.GetIterator().Next();
+			gRoot->Close(cookie);
+			return B_OK;
+		}
+
+		gRoot->Close(cookie);
 	}
 
 	return B_ERROR;
