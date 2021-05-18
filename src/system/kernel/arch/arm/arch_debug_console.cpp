@@ -73,6 +73,10 @@ arch_debug_serial_getchar(void)
 void
 arch_debug_serial_putchar(const char c)
 {
+    extern int PL011PutChar(char c);
+    PL011PutChar(c);
+    return;
+
 	if (gArchDebugUART == NULL)
 		return;
 
@@ -97,7 +101,6 @@ arch_debug_serial_early_boot_message(const char *string)
 	arch_debug_serial_puts(string);
 }
 
-
 status_t
 arch_debug_console_init(kernel_args *args)
 {
@@ -113,7 +116,23 @@ arch_debug_console_init(kernel_args *args)
 	if (gArchDebugUART == NULL)
 		return B_ERROR;
 
-	gArchDebugUART->InitEarly();
+
+//    gArchDebugUART->Enable();
+//	gArchDebugUART->InitEarly();
+
+    int32 ii = 0;
+    char gd[20] = "HACB\n";
+    while (ii<6) {
+        arch_debug_serial_putchar(gd[ii]);
+        ii++;
+    }
+
+    ii = 0;
+    char gc[20] = {'H', 'A', 'C', 'B', '\n'};
+    while (ii<6) {
+        arch_debug_serial_putchar(gc[ii]);
+        ii++;
+    }
 
 	return B_OK;
 }

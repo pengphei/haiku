@@ -206,7 +206,7 @@ ArchUARTPL011::In32(int reg)
 void
 ArchUARTPL011::Barrier()
 {
-	asm volatile ("" : : : "memory");
+    asm volatile ("" : : : "memory");
 }
 
 
@@ -292,7 +292,7 @@ ArchUARTPL011::GetChar(bool wait)
 		// Wait until a character is received?
 		if (wait) {
 			while ((In32(PL01x_FR) & PL01x_FR_RXFE) != 0)
-				Barrier();
+                Barrier();
 		}
 		return In32(PL01x_DR);
 	}
@@ -318,9 +318,53 @@ ArchUARTPL011::FlushRx()
 		Barrier();
 }
 
+typedef struct
+{
+    addr_t reg;
+    int64 clock;
+}stUrtPL011;
+
+static stUrtPL011 pl011;
+
+static uint32 In32(int reg)
+{
+    return *(volatile uint32*)(pl011.reg + reg);
+}
+
+static void Out32(int reg, uint32 data)
+{
+    *(volatile uint32*)(pl011.reg + reg) = data;
+}
+
+static void Barrier()
+{
+    asm volatile ("" : : : "memory");
+}
+
+static void Enable()
+{
+    uint32 cr = PL01x_CR_UARTEN;
+        // Enable UART
+    cr |= PL011_CR_TXE | PL011_CR_RXE;
+        // Enable TX and RX
+
+    Out32(PL011_CR, cr);
+}
+
+extern int PL011PutChar(char c)
+{
+    // Wait until there is room in fifo
+    Out32(PL01x_DR, c);
+    return 0;
+}
+
 
 ArchUARTPL011 *arch_get_uart_pl011(addr_t base, int64 clock)
 {
+    pl011.clock = clock;
+    pl011.reg = base;
+    Enable();
+
 	static char buffer[sizeof(ArchUARTPL011)];
 	ArchUARTPL011 *uart = new(buffer) ArchUARTPL011(base, clock);
 	return uart;

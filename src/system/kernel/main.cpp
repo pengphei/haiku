@@ -64,7 +64,7 @@
 #include "vm/VMAnonymousCache.h"
 
 
-//#define TRACE_BOOT
+#define TRACE_BOOT
 #ifdef TRACE_BOOT
 #	define TRACE(x...) dprintf("INIT: " x)
 #else
@@ -142,14 +142,29 @@ _start(kernel_args *bootKernelArgs, int currentCPU)
 		TRACE("init CPU\n");
 		cpu_init(&sKernelArgs);
 		cpu_init_percpu(&sKernelArgs, currentCPU);
+
 		TRACE("init interrupts\n");
 		int_init(&sKernelArgs);
 
-		TRACE("init VM\n");
+        uint32* colors = (uint32*)(bootKernelArgs->frame_buffer.physical_buffer.start);
+        int width = bootKernelArgs->frame_buffer.width;
+        int height = bootKernelArgs->frame_buffer.height;
+        int stride = bootKernelArgs->frame_buffer.bytes_per_row/4;
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                colors[y*stride + x] = x%0x100 + ((y%0x100) << 8);
+            }
+        }
+
+        for (;;) {}
+        TRACE("init VM\n");
+
 		vm_init(&sKernelArgs);
 			// Before vm_init_post_sem() is called, we have to make sure that
 			// the boot loader allocated region is not used anymore
 		boot_item_init();
+
 		debug_init_post_vm(&sKernelArgs);
 		low_resource_manager_init();
 
